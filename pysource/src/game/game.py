@@ -119,58 +119,78 @@ def check_result(state: State) -> Tuple[bool, CellStatus]:
 
 def action(state: State, loc: Location):
     board = state.board
-    # TODO CHECK?
-    possible_moves = check_possible_moves(state)
+    possible_moves = check_possible_moves(state) if not bool(state.possible_moves) else state.possible_moves 
     current_turn = state.current_turn
     game_counter = state.game_counter
     end_status = state.end_status
     is_another_passed = state.is_another_passed
     count = state.count
 
-    if possible_moves.keys() is None:
-        if is_another_passed:
-            end_status = EndStatusEnum.PassEnd
-        is_another_passed = True
-    else:
-        if loc in possible_moves.keys():
-            x, y = loc
-            board[x][y] = current_turn
+    # Valid moves
+    if loc in possible_moves.keys():
+        x, y = loc
+        board[x][y] = current_turn
 
-            countX, countY = state.count
-            if current_turn == CellStatusEnum.Black:
-                count = (countX + 1, countY)
-            if current_turn == CellStatusEnum.White:
-                count = (countX, countY + 1)
+        for flip in possible_moves[loc]:
+            toFlipX, toFlipY = flip
+            board[toFlipX][toFlipY] = current_turn
 
-            for flip in possible_moves[loc]:
-                toFlipX, toFlipY = flip
-                board[toFlipX][toFlipY] = current_turn
+        countX, countY = state.count
+        if current_turn == CellStatusEnum.Black:
+            count = (countX + 1 + len(possible_moves[loc]), countY)
+        if current_turn == CellStatusEnum.White:
+            count = (countX, countY + 1 + len(possible_moves[loc]))
+
         is_another_passed = False
 
-    is_end, flag = check_result(state)
-    if is_end:
-        if flag is None:
-            end_status = EndStatusEnum.FullDraw
-        if flag == CellStatusEnum.Black:
-            end_status = EndStatusEnum.BlackWin
-        if flag == CellStatusEnum.White:
-            end_status = EndStatusEnum.WhiteWin
+        if current_turn == CellStatusEnum.Black:
+            current_turn = CellStatusEnum.White
+        else: current_turn = CellStatusEnum.Black
 
-    if current_turn == CellStatusEnum.Black:
-        current_turn = CellStatusEnum.White
-    else: current_turn = CellStatusEnum.Black
+        if end_status == EndStatusEnum.Playing:
+            game_counter += 1
 
-    if end_status == EndStatusEnum.Playing:
-        game_counter += 1
+    else:
+        raise Exception('given location is not a valid move')
 
     newState = State()
     newState.board = board
-    newState.possible_moves = possible_moves
     newState.current_turn = current_turn
     newState.game_counter = game_counter
     newState.end_status = end_status
     newState.is_another_passed = is_another_passed
     newState.count = count
+    newState.possible_moves = check_possible_moves(newState)
+
+    # game end OR pass
+    if len(newState.possible_moves.keys()) == 0:
+        # PASSEND 
+        # TODO remove
+        if newState.is_another_passed:
+            newState.end_status = EndStatusEnum.PassEnd
+        # maybe not end
+        else:
+            # re-change turn
+            if newState.current_turn == CellStatusEnum.Black:
+                newState.current_turn = CellStatusEnum.White
+            else: newState.current_turn = CellStatusEnum.Black
+            # adjust game counter
+            newState.game_counter += 1
+            # check PASSEND
+            if not bool(check_possible_moves(newState)):
+                print('!!!!!!!!!!!!!!!! PASSEND !!!!!!!!!!!!!!!!')
+                newState.end_status = EndStatusEnum.PassEnd    
+
+        newState.is_another_passed = True
+
+    is_end, flag = check_result(newState)
+    if is_end:
+        if flag is None:
+            newState.end_status = EndStatusEnum.FullDraw
+        if flag == CellStatusEnum.Black:
+            newState.end_status = EndStatusEnum.BlackWin
+        if flag == CellStatusEnum.White:
+            newState.end_status = EndStatusEnum.WhiteWin
 
     return newState
 

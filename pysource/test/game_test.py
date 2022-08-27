@@ -1,4 +1,5 @@
 import itertools
+import random
 import unittest
 from src.game import game
 
@@ -64,4 +65,33 @@ class TestBoardPossibleMoves(unittest.TestCase):
         self.assertEqual(len(d.keys()), 0)
 
 
-
+class TestRandomMoves(unittest.TestCase):
+    def test_randomGame(self):
+        for _ in range(50):
+            state = game.State()
+            while True:
+                if state.end_status != game.EndStatusEnum.Playing:
+                    break
+                pMoves = list(game.check_possible_moves(state).keys())
+                if len(pMoves) == 0:
+                    pass
+                else:
+                    rndNum = random.randint(0, len(pMoves) - 1)
+                    state = game.action(state, pMoves[rndNum])
+            
+            match state.end_status:
+                case game.EndStatusEnum.WhiteWin:
+                    win = 'white wins'
+                case game.EndStatusEnum.BlackWin:
+                    win = 'black wins'
+                case game.EndStatusEnum.FullDraw:
+                    win = 'draw'
+                case game.EndStatusEnum.PassEnd:
+                    win = 'passend ??'
+                case _:
+                    win = '?'
+        
+            cx, cy = state.count
+            print(f'== {win} ==')
+            print(f'black == {cx}, white = {cy}')
+        self.assertEqual(True, True)
