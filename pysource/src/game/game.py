@@ -1,10 +1,8 @@
 from enum import Enum, IntEnum
 import itertools
 from typing import Dict, Final, List, Optional, Tuple
-import structlog
 
 BOARD_LENGTH: Final[int] = 8
-log: structlog.stdlib.BoundLogger = structlog.get_logger()
 
 Location = Tuple[int, int]
 
@@ -30,6 +28,7 @@ class CellStatusEnum(IntEnum):
     Black = 2
 
 CellStatus = Optional[CellStatusEnum]
+BoardType = list[list[CellStatus]]
 
 class State():
     def __init__(self):
@@ -47,7 +46,6 @@ class State():
         self.current_turn = CellStatusEnum.Black
         self.game_counter = 0
         self.end_status = EndStatusEnum.Playing
-        self.is_another_passed = False
         # Black, White
         self.count: Tuple[int, int] = (0, 0)
 
@@ -117,13 +115,26 @@ def check_result(state: State) -> Tuple[bool, CellStatus]:
             return True, CellStatusEnum.White
     return False, None
 
+def calculate_cout_n(board: BoardType):
+    cx = 0
+    cy = 0
+    for i in board:
+        for j in i:
+            if j == None:
+                pass
+            if j == CellStatusEnum.Black:
+                cx += 1
+            if j == CellStatusEnum.White:
+                cy += 1
+    return cx, cy
+
+
 def action(state: State, loc: Location):
     board = state.board
     possible_moves = check_possible_moves(state) if not bool(state.possible_moves) else state.possible_moves 
     current_turn = state.current_turn
     game_counter = state.game_counter
     end_status = state.end_status
-    is_another_passed = state.is_another_passed
     count = state.count
 
     # Valid moves
@@ -135,13 +146,7 @@ def action(state: State, loc: Location):
             toFlipX, toFlipY = flip
             board[toFlipX][toFlipY] = current_turn
 
-        countX, countY = state.count
-        if current_turn == CellStatusEnum.Black:
-            count = (countX + 1 + len(possible_moves[loc]), countY)
-        if current_turn == CellStatusEnum.White:
-            count = (countX, countY + 1 + len(possible_moves[loc]))
-
-        is_another_passed = False
+        count = calculate_cout_n(board)
 
         if current_turn == CellStatusEnum.Black:
             current_turn = CellStatusEnum.White
@@ -158,30 +163,21 @@ def action(state: State, loc: Location):
     newState.current_turn = current_turn
     newState.game_counter = game_counter
     newState.end_status = end_status
-    newState.is_another_passed = is_another_passed
     newState.count = count
     newState.possible_moves = check_possible_moves(newState)
 
     # game end OR pass
     if len(newState.possible_moves.keys()) == 0:
-        # PASSEND 
-        # TODO remove
-        if newState.is_another_passed:
-            newState.end_status = EndStatusEnum.PassEnd
         # maybe not end
-        else:
-            # re-change turn
-            if newState.current_turn == CellStatusEnum.Black:
-                newState.current_turn = CellStatusEnum.White
-            else: newState.current_turn = CellStatusEnum.Black
-            # adjust game counter
-            newState.game_counter += 1
-            # check PASSEND
-            if not bool(check_possible_moves(newState)):
-                print('!!!!!!!!!!!!!!!! PASSEND !!!!!!!!!!!!!!!!')
-                newState.end_status = EndStatusEnum.PassEnd    
-
-        newState.is_another_passed = True
+        # re-change turn
+        if newState.current_turn == CellStatusEnum.Black:
+            newState.current_turn = CellStatusEnum.White
+        else: newState.current_turn = CellStatusEnum.Black
+        # adjust game counter
+        newState.game_counter += 1
+        # check PASSEND
+        if not bool(check_possible_moves(newState)):
+            newState.end_status = EndStatusEnum.PassEnd    
 
     is_end, flag = check_result(newState)
     if is_end:

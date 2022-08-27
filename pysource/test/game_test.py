@@ -67,7 +67,7 @@ class TestBoardPossibleMoves(unittest.TestCase):
 
 class TestRandomMoves(unittest.TestCase):
     def test_randomGame(self):
-        for _ in range(50):
+        for _ in range(100):
             state = game.State()
             while True:
                 if state.end_status != game.EndStatusEnum.Playing:
@@ -93,5 +93,5 @@ class TestRandomMoves(unittest.TestCase):
         
             cx, cy = state.count
             print(f'== {win} ==')
-            print(f'black == {cx}, white = {cy}')
+            print(f'black == {cx}, white = {cy}, total = {cx + cy}')
         self.assertEqual(True, True)
