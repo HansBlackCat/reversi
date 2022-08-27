@@ -1,8 +1,8 @@
 from enum import Enum, IntEnum
 import itertools
-from typing import Dict, Final, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
-BOARD_LENGTH: Final[int] = 8
+BOARD_LENGTH = 8
 
 Location = Tuple[int, int]
 
@@ -28,8 +28,7 @@ class CellStatusEnum(IntEnum):
     Black = 2
 
 CellStatus = Optional[CellStatusEnum]
-BoardType = list[list[CellStatus]]
-
+BoardType = List[List[CellStatus]]
 class State():
     def __init__(self):
         self.board: list[list[CellStatus]] = [
@@ -65,7 +64,8 @@ def check_possible_moves(state: State) -> Dict[Location, List[Location]]:
         # check near <= 8 cells from given location
         for en in DirectionEnum:
             di, dj = en
-            if is_in_border(movable := (i + di, j + dj)):
+            movable = (i + di, j + dj)
+            if is_in_border(movable):
                 movables.append((movable, en))
         # check if <= 8 cells contain foe
         for mvs in movables:

@@ -7,7 +7,7 @@ LL = game.BOARD_LENGTH
 w = game.CellStatusEnum.White
 b = game.CellStatusEnum.Black
 
-dead_end_board1: list[list[game.CellStatus]] = [
+dead_end_board1: game.BoardType = [
     [*itertools.repeat(w, LL)],
     [*itertools.repeat(w, LL)],
     [*itertools.repeat(w, LL)],
@@ -79,17 +79,16 @@ class TestRandomMoves(unittest.TestCase):
                     rndNum = random.randint(0, len(pMoves) - 1)
                     state = game.action(state, pMoves[rndNum])
             
-            match state.end_status:
-                case game.EndStatusEnum.WhiteWin:
-                    win = 'white wins'
-                case game.EndStatusEnum.BlackWin:
-                    win = 'black wins'
-                case game.EndStatusEnum.FullDraw:
-                    win = 'draw'
-                case game.EndStatusEnum.PassEnd:
-                    win = 'passend ??'
-                case _:
-                    win = '?'
+            if state.end_status == game.EndStatusEnum.WhiteWin:
+                win = 'white wins'
+            elif state.end_status == game.EndStatusEnum.BlackWin:
+                win = 'black wins'
+            elif state.end_status == game.EndStatusEnum.FullDraw:
+                win = 'draw'
+            elif state.end_status == game.EndStatusEnum.PassEnd:
+                win = 'passend ??'
+            else:
+                win = '??'
         
             cx, cy = state.count
             print(f'== {win} ==')
